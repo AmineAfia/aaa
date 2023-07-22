@@ -244,8 +244,7 @@ export async function fillUserOp(
       provider
     );
     console.log("c addr", c.address);
-    // op1.nonce = await c[getNonceFunction]().catch(rethrow());
-    op1.nonce = 33
+    op1.nonce = await c[getNonceFunction]().catch(rethrow());
   }
   if (op1.callGasLimit == null && op.callData != null) {
     if (provider == null)
