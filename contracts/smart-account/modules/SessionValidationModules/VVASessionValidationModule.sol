@@ -36,11 +36,22 @@ contract VVASessionValidationModule is SismoConnect {
             sismoConnectResponse,
             (SismoConnectResponse)
         );
+        // we want users to prove that they own a Sismo Vault
+        // and that they are members of the group with the groupId passed from the FE in the sessionKeyData
+        // we are recreating the auth and claim requests made in the frontend to be sure that
+        // the proofs provided in the response are valid with respect to this auth request
+        AuthRequest[] memory auths = new AuthRequest[](2);
+        auths[0] = buildAuth({authType: AuthType.VAULT});
+        auths[1] = buildAuth({authType: AuthType.EVM_ACCOUNT});
+
+        ClaimRequest[] memory claims = new ClaimRequest[](1);
+        claims[0] = buildClaim({groupId: groupId});
+
         SismoConnectRequest memory request = buildRequest(
-            buildAuth({authType: AuthType.VAULT}),
-            buildClaim({groupId: groupId}),
-            buildSignature({message: abi.encode(sessionKey)})
-        ); // TODO correct to use sessionKey?
+            auths,
+            claims,
+            buildSignature({message: abi.encode(sessionKey)}) // TODO correct to use sessionKey?
+        );
 
         try _sismoConnectVerifier.verify(response, request, config()) returns (
             SismoConnectVerifiedResult memory result
