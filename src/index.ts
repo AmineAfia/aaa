@@ -10,18 +10,18 @@ import { Wallet, providers, ethers } from "ethers";
 
 config();
 const provider = new providers.JsonRpcProvider(
-  "https://rpc.ankr.com/polygon_mumbai"
+  "https://rpc.ankr.com/eth_goerli"
 );
 const wallet = new Wallet(process.env.PRIVATE_KEY || "", provider);
 const bundler: IBundler = new Bundler({
   bundlerUrl: "https://bundler.biconomy.io/api/v2/80001/abc",
-  chainId: ChainId.POLYGON_MUMBAI,
+  chainId: ChainId.GOERLI,
   entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
 });
 
 const biconomySmartAccountConfig: BiconomySmartAccountConfig = {
   signer: wallet,
-  chainId: ChainId.POLYGON_MUMBAI,
+  chainId: ChainId.GOERLI,
   bundler: bundler,
 };
 
@@ -33,6 +33,7 @@ async function createAccount() {
   console.log("address: ", await biconomySmartAccount.getSmartAccountAddress());
   return biconomyAccount;
 }
+
 // 2. deploy key manager
 // 3. deploy validation module
 // white list Arsenii
