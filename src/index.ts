@@ -2,7 +2,7 @@ import {config} from 'dotenv';
 import {IBundler, Bundler} from '@biconomy/bundler';
 import {ChainId} from '@biconomy/core-types';
 import {ethers as hardhatEthers, waffle, deployments} from 'hardhat';
-import {BiconomySmartAccount, BiconomySmartAccountConfig, DEFAULT_ENTRYPOINT_ADDRESS} from '@biconomy/account';
+import {BiconomySmartAccountConfig, DEFAULT_ENTRYPOINT_ADDRESS} from '@biconomy/account';
 import {Wallet, providers, ethers} from 'ethers';
 import {makeEcdsaModuleUserOp} from '../test/utils/userOp';
 import {
@@ -32,22 +32,14 @@ const bundler: IBundler = new Bundler({
 	entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
 });
 
-const biconomySmartAccountConfig: BiconomySmartAccountConfig = {
-	signer: wallet,
-	chainId: ChainId.POLYGON_MUMBAI,
-	bundler: bundler,
-};
-
 async function createAccount() {
 	const ecdsaModule = await getEcdsaOwnershipRegistryModule();
 	const EcdsaOwnershipRegistryModule = await hardhatEthers.getContractFactory('EcdsaOwnershipRegistryModule');
-	let ecdsaOwnershipSetupData = EcdsaOwnershipRegistryModule.interface.encodeFunctionData('initForSmartAccount', [
-		"0x0aaa82dfdf58d1e7e2da272eda4942e27d787f4b",
-	]);
+	let ecdsaOwnershipSetupData = EcdsaOwnershipRegistryModule.interface.encodeFunctionData('initForSmartAccount', [smartAccountOwner.address]);
 
 	const smartAccountDeploymentIndex = 0;
 	const createdUserSA = await getSmartAccountWithModule(ecdsaModule.address, ecdsaOwnershipSetupData, smartAccountDeploymentIndex);
-	console.log('SA owner: ', createdUserSA.owner);
+	console.log('SA owner: ', await ecdsaModule.getOwner(userSA.address));
 	console.log('SA address: ', await createdUserSA.address);
 	return createdUserSA;
 }
