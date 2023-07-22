@@ -11,6 +11,7 @@ import {
 	getMockToken,
 	getSmartAccountFactory,
 	getSmartAccountImplementation,
+	getSmartAccountWithModule,
 	getVerifyingPaymaster,
 } from '../test/utils/setupHelper';
 
@@ -20,9 +21,10 @@ config();
 
 const provider = new providers.JsonRpcProvider('https://rpc.ankr.com/polygon_mumbai');
 const wallet = new Wallet(process.env.PRIVATE_KEY || '', provider);
-var smartAccount: any = {};
+var userSA: any = {};
 const maxAmount = ethers.utils.parseEther('100');
-
+const [deployer, smartAccountOwner, alice, bob, charlie, verifiedSigner, refundReceiver, sessionKey, nonAuthSessionKey] =
+	waffle.provider.getWallets();
 
 const bundler: IBundler = new Bundler({
 	bundlerUrl: 'https://bundler.biconomy.io/api/v2/80001/abc',
@@ -37,25 +39,29 @@ const biconomySmartAccountConfig: BiconomySmartAccountConfig = {
 };
 
 async function createAccount() {
-	const biconomyAccount = new BiconomySmartAccount(biconomySmartAccountConfig);
-	const biconomySmartAccount = await biconomyAccount.init();
-	console.log('owner: ', biconomySmartAccount.owner);
-	console.log('SA address: ', await biconomySmartAccount.getSmartAccountAddress());
-	return biconomyAccount;
+	const ecdsaModule = await getEcdsaOwnershipRegistryModule();
+	const EcdsaOwnershipRegistryModule = await hardhatEthers.getContractFactory('EcdsaOwnershipRegistryModule');
+	let ecdsaOwnershipSetupData = EcdsaOwnershipRegistryModule.interface.encodeFunctionData('initForSmartAccount', [
+		await smartAccountOwner.getAddress(),
+	]);
+
+	const smartAccountDeploymentIndex = 0;
+	const createdUserSA = await getSmartAccountWithModule(ecdsaModule.address, ecdsaOwnershipSetupData, smartAccountDeploymentIndex);
+	console.log('SA owner: ', createdUserSA.owner);
+	console.log('SA address: ', await createdUserSA.address);
+	return createdUserSA;
 }
 
 
 //deploy forward flow module and enable it in the smart account	
 const deploymentsDetup = deployments.createFixture(async ({deployments, getNamedAccounts}) => {
 	await deployments.fixture();
-	const [deployer, smartAccountOwner, alice, bob, charlie, verifiedSigner, refundReceiver, sessionKey, nonAuthSessionKey] =
-		waffle.provider.getWallets();
 	const ecdsaModule = await getEcdsaOwnershipRegistryModule();
 	const entryPoint = await getEntryPoint();
 	const sessionKeyManager = await (await hardhatEthers.getContractFactory('SessionKeyManager')).deploy();
 	console.log('2 deployed session keys manager');
 	
-	const smartAccountAddress = await smartAccount.getSmartAccountAddress();
+	const smartAccountAddress = await userSA.getSmartAccountAddress();
 	
 	let userOp = await makeEcdsaModuleUserOp(
 		'enableModule',
@@ -86,7 +92,7 @@ const deploymentsDetup = deployments.createFixture(async ({deployments, getNamed
 	const merkleTree = await enableNewTreeForSmartAccountViaEcdsa(
 		[ethers.utils.keccak256(leafData)],
 		sessionKeyManager,
-		smartAccount.address,
+		userSA.address,
 		smartAccountOwner,
 		entryPoint,
 		ecdsaModule.address
@@ -98,7 +104,7 @@ const deploymentsDetup = deployments.createFixture(async ({deployments, getNamed
 		smartAccountImplementation: await getSmartAccountImplementation(),
 		smartAccountFactory: await getSmartAccountFactory(),
 		ecdsaModule: ecdsaModule,
-		userSA: smartAccount,
+		userSA: userSA,
 		mockToken: mockToken,
 		verifyingPaymaster: await getVerifyingPaymaster(deployer, verifiedSigner),
 		sessionKeyManager: sessionKeyManager,
@@ -112,8 +118,8 @@ const deploymentsDetup = deployments.createFixture(async ({deployments, getNamed
 
 createAccount().then(async (returnedSmartAccount) => {
 	console.log('1 deployed smart account');
-	smartAccount = returnedSmartAccount;
-	const {entryPoint, userSA, sessionKeyManager, erc20SessionModule, sessionKeyData, leafData, merkleTree, mockToken} = await deploymentsDetup();
+	userSA = returnedSmartAccount;
+	const {entryPoint, userSA: createdUserSA, sessionKeyManager, erc20SessionModule, sessionKeyData, leafData, merkleTree, mockToken} = await deploymentsDetup();
 });
 
 // 3. deploy validation module
@@ -127,13 +133,13 @@ async function createTransaction() {
 	const transaction = {
 		to: '0x14a4CF64e8BdC492D7fAF782896E22C79334b1Fe',
 		data: '0x',
-		value: ethers.utils.parseEther('0.1'),
+		value: ethers.utils.parseEther('0'),
 	};
 
-	const userOp = await smartAccount.buildUserOp([transaction]);
+	const userOp = await userSA.buildUserOp([transaction]);
 	userOp.paymasterAndData = '0x';
 
-	const userOpResponse = await smartAccount.sendUserOp(userOp);
+	const userOpResponse = await userSA.sendUserOp(userOp);
 
 	const transactionDetail = await userOpResponse.wait();
 
