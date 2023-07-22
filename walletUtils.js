@@ -5,7 +5,7 @@ const fs = require("fs");
 const mnemonic = fs.readFileSync(".secret").toString().trim();
 
 const makeKeyList = (
-  num = 5,
+  num = 10,
   mn = mnemonic,
   index = 0,
   path = "m/44'/60'/0'/0/"

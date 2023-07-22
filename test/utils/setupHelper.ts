@@ -1,13 +1,14 @@
 import hre, { deployments, ethers } from "hardhat";
 import { Wallet, Contract, BytesLike, Signer } from "ethers";
 import {EntryPoint__factory,} from "../../typechain";
+import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/signers';
 const solc = require("solc");
 
 export const getEntryPoint = async () => {
-  const EntryPointDeployment = await deployments.get("EntryPoint");
-  const EntryPoint = await hre.ethers.getContractFactory("EntryPoint");
-  // return EntryPoint__factory.connect('0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789', ethers.provider.getSigner());
-  return EntryPoint__factory.connect(EntryPointDeployment.address, ethers.provider.getSigner());
+	const EntryPointDeployment = await deployments.get('EntryPoint');
+	const EntryPoint = await hre.ethers.getContractFactory('EntryPoint');
+	// return EntryPoint__factory.connect('0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789', ethers.provider.getSigner());
+	return EntryPoint__factory.connect(EntryPointDeployment.address, ethers.provider.getSigner());
 };
 
 export const getSmartAccountImplementation = async () => {
@@ -41,8 +42,8 @@ export const getSmartContractOwnershipRegistryModule = async() => {
 }
 
 export const getVerifyingPaymaster = async (
-  owner: Wallet,
-  verifiedSigner: Wallet,
+  owner: SignerWithAddress,
+  verifiedSigner: SignerWithAddress,
 ) => {
   const entryPoint = await getEntryPoint();
   const VerifyingSingletonPaymaster = await hre.ethers.getContractFactory("VerifyingSingletonPaymaster");
