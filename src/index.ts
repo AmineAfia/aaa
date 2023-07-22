@@ -19,18 +19,18 @@ import {enableNewTreeForSmartAccountViaEcdsa, getERC20SessionKeyParams} from '..
 
 config();
 
-const provider = new providers.JsonRpcProvider('https://rpc.ankr.com/polygon_mumbai');
-const wallet = new Wallet(process.env.PRIVATE_KEY || '', provider);
+// const provider = new providers.JsonRpcProvider('https://rpc.ankr.com/polygon_mumbai');
+// const wallet = new Wallet(process.env.PRIVATE_KEY || '', provider);
 var userSA: any = {};
 const maxAmount = ethers.utils.parseEther('100');
 const [deployer, smartAccountOwner, alice, bob, charlie, verifiedSigner, refundReceiver, sessionKey, nonAuthSessionKey] =
 	waffle.provider.getWallets();
 
-const bundler: IBundler = new Bundler({
-	bundlerUrl: 'https://bundler.biconomy.io/api/v2/80001/abc',
-	chainId: ChainId.POLYGON_MUMBAI,
-	entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
-});
+// const bundler: IBundler = new Bundler({
+// 	bundlerUrl: 'https://bundler.biconomy.io/api/v2/80001/abc',
+// 	chainId: ChainId.POLYGON_MUMBAI,
+// 	entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
+// });
 
 async function createAccount() {
 	const ecdsaModule = await getEcdsaOwnershipRegistryModule();
@@ -69,7 +69,7 @@ const deploymentsDetup = deployments.createFixture(async ({deployments, getNamed
 		ecdsaModule.address
 	);
 	await entryPoint.handleOps([userOp], alice.address);
-	console.log('created userOp');
+	console.log('✨ created userOp');
 
 	// 3. deploy validation module
 	const erc20SessionModule = await (await hardhatEthers.getContractFactory('ERC20SessionValidationModule')).deploy();
