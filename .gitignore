@@ -1,2 +1,14 @@
-.env
 node_modules
+.env
+.secret
+.idea
+coverage
+coverage.json
+typechain
+
+#Hardhat files
+cache
+artifacts
+
+#ignore .DS_Store recursively
+.DS_Store
