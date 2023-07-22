@@ -42,7 +42,7 @@ async function createAccount() {
 	const ecdsaModule = await getEcdsaOwnershipRegistryModule();
 	const EcdsaOwnershipRegistryModule = await hardhatEthers.getContractFactory('EcdsaOwnershipRegistryModule');
 	let ecdsaOwnershipSetupData = EcdsaOwnershipRegistryModule.interface.encodeFunctionData('initForSmartAccount', [
-		await smartAccountOwner.getAddress(),
+		"0x0aaa82dfdf58d1e7e2da272eda4942e27d787f4b",
 	]);
 
 	const smartAccountDeploymentIndex = 0;
@@ -58,10 +58,14 @@ const deploymentsDetup = deployments.createFixture(async ({deployments, getNamed
 	await deployments.fixture();
 	const ecdsaModule = await getEcdsaOwnershipRegistryModule();
 	const entryPoint = await getEntryPoint();
+
+	userSA = await createAccount()
+	console.log('1 deployed smart account');
+
 	const sessionKeyManager = await (await hardhatEthers.getContractFactory('SessionKeyManager')).deploy();
 	console.log('2 deployed session keys manager');
 	
-	const smartAccountAddress = await userSA.getSmartAccountAddress();
+	const smartAccountAddress = await userSA.address;
 	
 	let userOp = await makeEcdsaModuleUserOp(
 		'enableModule',
@@ -115,12 +119,11 @@ const deploymentsDetup = deployments.createFixture(async ({deployments, getNamed
 	};
 });
 
+// const {entryPoint, userSA: createdUserSA, sessionKeyManager, erc20SessionModule, sessionKeyData, leafData, merkleTree, mockToken} = await deploymentsDetup();
+deploymentsDetup().then(() => {
+	console.log('✅ done')
+})
 
-createAccount().then(async (returnedSmartAccount) => {
-	console.log('1 deployed smart account');
-	userSA = returnedSmartAccount;
-	const {entryPoint, userSA: createdUserSA, sessionKeyManager, erc20SessionModule, sessionKeyData, leafData, merkleTree, mockToken} = await deploymentsDetup();
-});
 
 // 3. deploy validation module
 // white list Arsenii
