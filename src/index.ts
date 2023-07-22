@@ -1,65 +1,144 @@
-import { config } from "dotenv";
-import { IBundler, Bundler } from "@biconomy/bundler";
-import { ChainId } from "@biconomy/core-types";
+import {config} from 'dotenv';
+import {IBundler, Bundler} from '@biconomy/bundler';
+import {ChainId} from '@biconomy/core-types';
+import {ethers as hardhatEthers, waffle, deployments} from 'hardhat';
+import {BiconomySmartAccount, BiconomySmartAccountConfig, DEFAULT_ENTRYPOINT_ADDRESS} from '@biconomy/account';
+import {Wallet, providers, ethers} from 'ethers';
+import {makeEcdsaModuleUserOp} from '../test/utils/userOp';
 import {
-  BiconomySmartAccount,
-  BiconomySmartAccountConfig,
-  DEFAULT_ENTRYPOINT_ADDRESS,
-} from "@biconomy/account";
-import { Wallet, providers, ethers } from "ethers";
+	getEcdsaOwnershipRegistryModule,
+	getEntryPoint,
+	getMockToken,
+	getSmartAccountFactory,
+	getSmartAccountImplementation,
+	getVerifyingPaymaster,
+} from '../test/utils/setupHelper';
+
+import {enableNewTreeForSmartAccountViaEcdsa, getERC20SessionKeyParams} from '../test/utils/sessionKey';
 
 config();
-const provider = new providers.JsonRpcProvider(
-  "https://rpc.ankr.com/polygon_mumbai"
-);
-const wallet = new Wallet(process.env.PRIVATE_KEY || "", provider);
+
+const provider = new providers.JsonRpcProvider('https://rpc.ankr.com/polygon_mumbai');
+const wallet = new Wallet(process.env.PRIVATE_KEY || '', provider);
+var smartAccount: any = {};
+const maxAmount = ethers.utils.parseEther('100');
+
+
 const bundler: IBundler = new Bundler({
-  bundlerUrl: "https://bundler.biconomy.io/api/v2/80001/abc",
-  chainId: ChainId.POLYGON_MUMBAI,
-  entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
+	bundlerUrl: 'https://bundler.biconomy.io/api/v2/80001/abc',
+	chainId: ChainId.POLYGON_MUMBAI,
+	entryPointAddress: DEFAULT_ENTRYPOINT_ADDRESS,
 });
 
 const biconomySmartAccountConfig: BiconomySmartAccountConfig = {
-  signer: wallet,
-  chainId: ChainId.POLYGON_MUMBAI,
-  bundler: bundler,
+	signer: wallet,
+	chainId: ChainId.POLYGON_MUMBAI,
+	bundler: bundler,
 };
 
-// 1. create SAC
 async function createAccount() {
-  const biconomyAccount = new BiconomySmartAccount(biconomySmartAccountConfig);
-  const biconomySmartAccount = await biconomyAccount.init();
-  console.log("owner: ", biconomySmartAccount.owner);
-  console.log("address: ", await biconomySmartAccount.getSmartAccountAddress());
-  return biconomyAccount;
+	const biconomyAccount = new BiconomySmartAccount(biconomySmartAccountConfig);
+	const biconomySmartAccount = await biconomyAccount.init();
+	console.log('owner: ', biconomySmartAccount.owner);
+	console.log('SA address: ', await biconomySmartAccount.getSmartAccountAddress());
+	return biconomyAccount;
 }
-// 2. deploy key manager
+
+
+//deploy forward flow module and enable it in the smart account	
+const deploymentsDetup = deployments.createFixture(async ({deployments, getNamedAccounts}) => {
+	await deployments.fixture();
+	const [deployer, smartAccountOwner, alice, bob, charlie, verifiedSigner, refundReceiver, sessionKey, nonAuthSessionKey] =
+		waffle.provider.getWallets();
+	const ecdsaModule = await getEcdsaOwnershipRegistryModule();
+	const entryPoint = await getEntryPoint();
+	const sessionKeyManager = await (await hardhatEthers.getContractFactory('SessionKeyManager')).deploy();
+	console.log('2 deployed session keys manager');
+	
+	const smartAccountAddress = await smartAccount.getSmartAccountAddress();
+	
+	let userOp = await makeEcdsaModuleUserOp(
+		'enableModule',
+		[sessionKeyManager.address],
+		smartAccountAddress,
+		smartAccountOwner,
+		entryPoint,
+		ecdsaModule.address
+	);
+	await entryPoint.handleOps([userOp], alice.address);
+	console.log('created userOp');
+
+	// 3. deploy validation module
+	const erc20SessionModule = await (await hardhatEthers.getContractFactory('ERC20SessionValidationModule')).deploy();
+	console.log('3 deployed Validation Module');
+
+	const mockToken = await getMockToken();
+	const {sessionKeyData, leafData} = await getERC20SessionKeyParams(
+		sessionKey.address,
+		mockToken.address,
+		charlie.address,
+		maxAmount,
+		0,
+		0,
+		erc20SessionModule.address
+	);
+
+	const merkleTree = await enableNewTreeForSmartAccountViaEcdsa(
+		[ethers.utils.keccak256(leafData)],
+		sessionKeyManager,
+		smartAccount.address,
+		smartAccountOwner,
+		entryPoint,
+		ecdsaModule.address
+	);
+	console.log('4 Enabled New Merkel Tree For SmartAccount Via Ecdsa');
+
+	return {
+		entryPoint: entryPoint,
+		smartAccountImplementation: await getSmartAccountImplementation(),
+		smartAccountFactory: await getSmartAccountFactory(),
+		ecdsaModule: ecdsaModule,
+		userSA: smartAccount,
+		mockToken: mockToken,
+		verifyingPaymaster: await getVerifyingPaymaster(deployer, verifiedSigner),
+		sessionKeyManager: sessionKeyManager,
+		erc20SessionModule: erc20SessionModule,
+		sessionKeyData: sessionKeyData,
+		leafData: leafData,
+		merkleTree: merkleTree,
+	};
+});
+
+
+createAccount().then(async (returnedSmartAccount) => {
+	console.log('1 deployed smart account');
+	smartAccount = returnedSmartAccount;
+	const {entryPoint, userSA, sessionKeyManager, erc20SessionModule, sessionKeyData, leafData, merkleTree, mockToken} = await deploymentsDetup();
+});
+
 // 3. deploy validation module
 // white list Arsenii
 // Arsenii triggers a transaction through the SA
 
-
 // trigger transaction
 async function createTransaction() {
-  console.log("creating account");
+	console.log('creating account');
 
-  const smartAccount = await createAccount();
+	const transaction = {
+		to: '0x14a4CF64e8BdC492D7fAF782896E22C79334b1Fe',
+		data: '0x',
+		value: ethers.utils.parseEther('0.1'),
+	};
 
-  const transaction = {
-    to: "0x14a4CF64e8BdC492D7fAF782896E22C79334b1Fe",
-    data: "0x",
-    value: ethers.utils.parseEther("0.1"),
-  };
+	const userOp = await smartAccount.buildUserOp([transaction]);
+	userOp.paymasterAndData = '0x';
 
-  const userOp = await smartAccount.buildUserOp([transaction]);
-  userOp.paymasterAndData = "0x";
+	const userOpResponse = await smartAccount.sendUserOp(userOp);
 
-  const userOpResponse = await smartAccount.sendUserOp(userOp);
+	const transactionDetail = await userOpResponse.wait();
 
-  const transactionDetail = await userOpResponse.wait();
-
-  console.log("transaction detail below");
-  console.log(transactionDetail);
+	console.log('transaction detail below');
+	console.log(transactionDetail);
 }
 
-createTransaction();
+// createTransaction();
