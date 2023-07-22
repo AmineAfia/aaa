@@ -6,7 +6,8 @@ const solc = require("solc");
 export const getEntryPoint = async () => {
   const EntryPointDeployment = await deployments.get("EntryPoint");
   const EntryPoint = await hre.ethers.getContractFactory("EntryPoint");
-  return EntryPoint__factory.connect(EntryPointDeployment.address, ethers.provider.getSigner());
+  return EntryPoint__factory.connect('0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789', ethers.provider.getSigner());
+  // return EntryPoint__factory.connect(EntryPointDeployment.address, ethers.provider.getSigner());
 };
 
 export const getSmartAccountImplementation = async () => {

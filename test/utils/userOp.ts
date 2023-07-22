@@ -243,6 +243,7 @@ export async function fillUserOp(
       [`function ${getNonceFunction}() view returns(uint256)`],
       provider
     );
+    console.log("c addr", c.address);
     op1.nonce = await c[getNonceFunction]().catch(rethrow());
   }
   if (op1.callGasLimit == null && op.callData != null) {
