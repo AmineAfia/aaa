@@ -35,11 +35,12 @@ const bundler: IBundler = new Bundler({
 async function createAccount() {
 	const ecdsaModule = await getEcdsaOwnershipRegistryModule();
 	const EcdsaOwnershipRegistryModule = await hardhatEthers.getContractFactory('EcdsaOwnershipRegistryModule');
-	let ecdsaOwnershipSetupData = EcdsaOwnershipRegistryModule.interface.encodeFunctionData('initForSmartAccount', [smartAccountOwner.address]);
-
+	const ownerAddress = await smartAccountOwner.getAddress();
+	let ecdsaOwnershipSetupData = EcdsaOwnershipRegistryModule.interface.encodeFunctionData('initForSmartAccount', [ownerAddress]);
+	
 	const smartAccountDeploymentIndex = 0;
 	const createdUserSA = await getSmartAccountWithModule(ecdsaModule.address, ecdsaOwnershipSetupData, smartAccountDeploymentIndex);
-	console.log('SA owner: ', await ecdsaModule.getOwner(userSA.address));
+	console.log('SA owner: ', await ecdsaModule.getOwner(createdUserSA.address));
 	console.log('SA address: ', await createdUserSA.address);
 	return createdUserSA;
 }
