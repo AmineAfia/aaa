@@ -1,9 +1,8 @@
-
-![Voulez-Vous-Auth_Banner](https://github.com/AmineAfia/aaa/assets/9674012/2747b513-b0e3-4f6d-b59f-174b94bff05a)
-
 # Voulez Vous Auth Solution
 
 Voulez-Vous Auth is a single-sign on solution for organisations by using account abstraction and zkProofs
+
+![Voulez-Vous-Auth_Banner](https://github.com/AmineAfia/aaa/assets/9674012/2747b513-b0e3-4f6d-b59f-174b94bff05a)
 
 # Project Description
 Voulez-Vous Auth is an innovative hackathon project that ingeniously integrates Account Abstraction and zkProofs. This combination allows members of any organization—be it a corporate enterprise, a Decentralized Autonomous Organization (DAO), or even a group of hackathon participants or traders—to access a singular Smart Account using their individual wallets. Although this solution can be employed in various dApp interactions, Voulez-Vous Auth has been specifically fine-tuned to cater to organizations, empowering their members to access the same Smart Account through their own wallets (like a shared wallet). In essence, Voulez-Vous Auth establishes an on-chain single sign-on (SSO) system tailored for organizations/groups of people. This solution is a viable alternative to traditional SSO solutions such as Auth0. Instead of utilizing a common organizational Gmail account for accessing shared resources, Voulez-Vous Auth allows each member to log in to the application using their individual wallets. Consequently, they're authenticated and logged in on behalf of their organization and can act on-chain on behalf of their organisation. This not only bolsters security but also simplifies access to shared accounts, leading to enhanced productivity , better collaboration and streamlined operations.
