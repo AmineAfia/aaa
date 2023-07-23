@@ -1,57 +1,26 @@
 
-# Biconomy Smart Account (Smart Contract Wallet) Overview
+![Voulez-Vous-Auth_Banner](https://github.com/AmineAfia/aaa/assets/9674012/2747b513-b0e3-4f6d-b59f-174b94bff05a)
 
-Biconomy Modular Smart Account is an [EIP-4337](https://eips.ethereum.org/EIPS/eip-4337) compatible modular smart contract wallet.
-Smart Account is ownerless by nature. UserOp and txns validation happens in Authorization Modules.
+# Voulez Vous Auth Solution
 
-Smart Account is designed in such a way that it is:
+Voulez-Vous Auth is a single-sign on solution for organisations by using account abstraction and zkProofs
 
-- Modular => highly customizable and extandable. 
-- Cheap to deploy proxy copies of an implementation (user wallets)
-- Wallet addresses are counterfactual in nature (you can know the address in advance and users can have the same address across all EVM chains)
-- Deployment cost can be sponsored 
+# Project Description
+Voulez-Vous Auth is an innovative hackathon project that ingeniously integrates Account Abstraction and zkProofs. This combination allows members of any organization—be it a corporate enterprise, a Decentralized Autonomous Organization (DAO), or even a group of hackathon participants or traders—to access a singular Smart Account using their individual wallets. Although this solution can be employed in various dApp interactions, Voulez-Vous Auth has been specifically fine-tuned to cater to organizations, empowering their members to access the same Smart Account through their own wallets (like a shared wallet). In essence, Voulez-Vous Auth establishes an on-chain single sign-on (SSO) system tailored for organizations/groups of people. This solution is a viable alternative to traditional SSO solutions such as Auth0. Instead of utilizing a common organizational Gmail account for accessing shared resources, Voulez-Vous Auth allows each member to log in to the application using their individual wallets. Consequently, they're authenticated and logged in on behalf of their organization and can act on-chain on behalf of their organisation. This not only bolsters security but also simplifies access to shared accounts, leading to enhanced productivity , better collaboration and streamlined operations.
 
-# How to run the project
+# How it's Made
+The project is built on top of biconomy contracts and sismo connect. the solution deploys the modular smart accounts from biconomy (from this branch https://github.com/bcnmy/scw-contracts/tree/SCW-V2-Modular-SA). Instead of using the the SDK, we deployed the needed AA contracts manually and deployed the SessionKeyManager, then deployed a custom Validation Module to manage sismo proofs. the set of contracts handle authentication, adding and removing users from an organisation. whenever a user is added or removed in sismo connect (thus added or removed from a Sismo Data Group), our Validation Module picks up the user when they try to login using our solution and remembers that the user presented a proof. This way users are added and removed from the org automatically. Our SDK offers the functionality to integrate Voulez Vous in any dapp and abstracts all the logic to manage the sismo proofs and sending userOps to the smart account. We have also built an Admin Console with NextJS, React and WalletConnect to manage organisations, and to onboard new organisational members into the Voulez-Vous Auth experience.
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
-
-## 1. Install
-```shell
-> npm install
-// or
-> yarn install
+# deploy the smart contracts
+To deploy the smart contracts run
+```
+npx hardhat run ./src/index.ts --network polygon_mumbai
 ```
 
-## 2. Configure
-Place a mnemonic in a `.secret` file in the root folder of the project.
-
-### 3. Run
-
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
-
-Try running some of the following tasks:
-
-```shell
-npx hardhat test
-
-// other
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.ts
-TS_NODE_FILES=true npx ts-node scripts/deploy.ts
-npx eslint '**/*.{js,ts}'
-npx eslint '**/*.{js,ts}' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
+# run the admin UI
+To run the admin dashboard run
 ```
-
-# Performance optimizations
-
-For faster runs of your tests and scripts, consider skipping ts-node's type checking by setting the environment variable `TS_NODE_TRANSPILE_ONLY` to `1` in hardhat's environment. For more details see [the documentation](https://hardhat.org/guides/typescript.html#performance-optimizations).
+cd voulez-vouz-auth-adminConsole-frontend
+yarn install
+yarn dev
+```
