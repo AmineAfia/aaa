@@ -14,7 +14,7 @@ export const CONFIG: SismoConnectConfig = {
     // For development purposes insert the Data Sources that you want to impersonate
     // Never use this in production
     impersonate: [
-      //"vitalik.eth"
+      "vitalik.eth"
       /* // EVM Data Sources
       "dhadrien.sismo.eth",
       "0xA4C94A6091545e40fc9c3E0982AEc8942E282F38",

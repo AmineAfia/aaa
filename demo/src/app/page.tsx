@@ -15,7 +15,7 @@ import {
   AuthType,
   ClaimType,
 } from "./sismo-connect-config";
-import {ethers as hardhatEthers} from 'hardhat';
+import {ethers} from 'ethers';
 
 import { makeEcdsaModuleUserOp } from '../../../test/utils/userOp'
 import {
@@ -64,16 +64,20 @@ export default function Home() {
                 console.log(JSON.stringify(response))
 
                 try {
-                  const [_, smartAccountOwner] = await hardhatEthers.getSigners();
+                  window.ethereum.enable()
+                  const provider = new ethers.providers.Web3Provider(window.ethereum, "any")
+                  await provider.send("eth_requestAccounts", [])
+                  const signer = provider.getSigner()
+                  // const [_, smartAccountOwner] = await hardhatEthers.getSigners();
+                  // const ownerAddress = "0xb256349E861b5f942E3D9e675CFda632758c798a"
                   const ecdsaModule = await getEcdsaOwnershipRegistryModule();
                   const entryPoint = await getEntryPoint();
-                  const ownerAddress = await smartAccountOwner.getAddress();
-                  const sessionKeyManager = await (await hardhatEthers.getContractFactory('SessionKeyManager')).deploy();
+                  // const sessionKeyManager = await (await hardhatEthers.getContractFactory('SessionKeyManager')).deploy();
                   let userOp = await makeEcdsaModuleUserOp(
                     'enableModule',
-                    [sessionKeyManager.address],
+                    ["0x71bA2429BCc2aB6Bcd40D96D3d8644115fd9D76B"],
                     COMPANY_ADDRESS,
-                    ownerAddress,
+                    signer,
                     entryPoint,
                     ecdsaModule.address
                   );
