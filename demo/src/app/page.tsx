@@ -17,16 +17,6 @@ import {
 } from "./sismo-connect-config";
 import {ethers} from 'ethers';
 
-import { makeEcdsaModuleUserOp } from '../../../test/utils/userOp'
-import {
-	getEcdsaOwnershipRegistryModule,
-	getEntryPoint,
-	getMockToken,
-	getSmartAccountFactory,
-	getSmartAccountImplementation,
-	getSmartAccountWithModule,
-	getVerifyingPaymaster,
-} from '../../../test/utils/setupHelper';
 const COMPANY_ADDRESS = '0xf3308Cfc92e0166D3811e09E2360A31D85312500'
 
 export default function Home() {
@@ -39,7 +29,6 @@ export default function Home() {
   return (
     <>
       <main className="main">
-        <Header />
         {pageState == "init" ? (
           <>
             <SismoConnectButton
@@ -53,8 +42,13 @@ export default function Home() {
               claims={CLAIMS}
               // Signature = user can sign a message embedded in their zk proof
               signature={SIGNATURE_REQUEST}
-              text="Prove With Sismo"
+              text="Login with VVA"
               // Triggered when received Sismo Connect response from user data vault
+              onResponseBytes={
+                async(response: string) => {
+                  console.log('responseBytes', response)
+                }
+              }
               onResponse={async (response: SismoConnectResponse) => {
                 setSismoConnectResponse(response);
                 setPageState("verifying");
@@ -62,31 +56,6 @@ export default function Home() {
                 const actorAddress = proofAuth?.userId
                 console.log('user address', actorAddress)
                 console.log(JSON.stringify(response))
-
-                try {
-                  window.ethereum.enable()
-                  const provider = new ethers.providers.Web3Provider(window.ethereum, "any")
-                  await provider.send("eth_requestAccounts", [])
-                  const signer = provider.getSigner()
-                  // const [_, smartAccountOwner] = await hardhatEthers.getSigners();
-                  // const ownerAddress = "0xb256349E861b5f942E3D9e675CFda632758c798a"
-                  const ecdsaModule = await getEcdsaOwnershipRegistryModule();
-                  const entryPoint = await getEntryPoint();
-                  // const sessionKeyManager = await (await hardhatEthers.getContractFactory('SessionKeyManager')).deploy();
-                  let userOp = await makeEcdsaModuleUserOp(
-                    'enableModule',
-                    ["0x71bA2429BCc2aB6Bcd40D96D3d8644115fd9D76B"],
-                    COMPANY_ADDRESS,
-                    signer,
-                    entryPoint,
-                    ecdsaModule.address
-                  );
-              
-                  await new Promise((f) => setTimeout(f, 10000));
-                  await entryPoint.handleOps([userOp], actorAddress);
-                } catch (err) {
-                  console.log('error setting up smart account... ', err)
-                }
 
                 /* if (verifiedResult.ok) {
                   setSismoConnectVerifiedResult(data);
