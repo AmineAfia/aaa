@@ -30,10 +30,9 @@ contract VVASessionValidationModule is SismoConnect {
         bytes16 groupId = bytes16(_sessionKeyData[20:36]);
 
         // everything we get from sismo proof of the user
-        bytes memory sismoConnectResponse = _sessionKeyData[36:]; // TODO check the slicing
 
         SismoConnectResponse memory response = abi.decode(
-            sismoConnectResponse,
+            _sessionKeyData[36:],
             (SismoConnectResponse)
         );
         // we want users to prove that they own a Sismo Vault
@@ -50,7 +49,7 @@ contract VVASessionValidationModule is SismoConnect {
         SismoConnectRequest memory request = buildRequest(
             auths,
             claims,
-            buildSignature({message: abi.encode(sessionKey)}) // TODO correct to use sessionKey?
+            buildSignature({message: abi.encode(sessionKey)})
         );
 
         try _sismoConnectVerifier.verify(response, request, config()) returns (
