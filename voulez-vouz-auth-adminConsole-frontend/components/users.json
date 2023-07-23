@@ -1,0 +1,20 @@
+[
+    {
+      "identifier": 1, 
+      "name": "Vitalik", 
+      "role": "admin",
+      "walletaddress": "0x123...456789"
+    },
+    {
+      "identifier": 2, 
+      "name": "Kartik", 
+      "role": "teammember",
+      "walletaddress": "0x987...654321"
+    },
+    {
+      "identifier": 3,
+      "name": "Stani", 
+      "role": "teammember",
+      "walletaddress": "0x918...273645"
+    }
+]
