@@ -9,13 +9,14 @@ import {
 	getEcdsaOwnershipRegistryModule,
 	getEntryPoint,
 	getMockToken,
+	getMockVVASessionKeyData,
 	getSmartAccountFactory,
 	getSmartAccountImplementation,
 	getSmartAccountWithModule,
 	getVerifyingPaymaster,
 } from '../test/utils/setupHelper';
 
-import {enableNewTreeForSmartAccountViaEcdsa, getERC20SessionKeyParams} from '../test/utils/sessionKey';
+import {enableNewTreeForSmartAccountViaEcdsa, getERC20SessionKeyParams, getVVASessionKeyParams, makeEcdsaSessionKeySignedUserOp} from '../test/utils/sessionKey';
 
 async function index() {
 	config();
@@ -56,6 +57,14 @@ async function index() {
 		await deployments.fixture();
 		const [deployer, smartAccountOwner, alice, sessionKey, charlie, bob, verifiedSigner, refundReceiver, nonAuthSessionKey] =
 			await hardhatEthers.getSigners();
+
+		console.log('deployer: ',await deployer.getAddress());
+		console.log('smartAccountOwner: ',await smartAccountOwner.getAddress());
+		console.log('alice: ',await alice.getAddress());
+		console.log('sessionKey: ',await sessionKey.getAddress());
+		console.log('charlie: ',await charlie.getAddress());
+		console.log('bob: ',await bob.getAddress());
+		
 		const ecdsaModule = await getEcdsaOwnershipRegistryModule();
 		const entryPoint = await getEntryPoint();
 
@@ -63,9 +72,9 @@ async function index() {
 		const ownerAddress = await smartAccountOwner.getAddress();
 		let ecdsaOwnershipSetupData = EcdsaOwnershipRegistryModule.interface.encodeFunctionData('initForSmartAccount', [ownerAddress]);
 
-		const smartAccountDeploymentIndex = 12;
+		const smartAccountDeploymentIndex = 20;
 		const userSA = await getSmartAccountWithModule(ecdsaModule.address, ecdsaOwnershipSetupData, smartAccountDeploymentIndex);
-		await new Promise((f) => setTimeout(f, 10000));
+		await new Promise((f) => setTimeout(f, 30000));
 		console.log('SA owner: ', await ecdsaModule.getOwner(userSA.address));
 		console.log('SA address: ', userSA.address);
 
@@ -78,6 +87,7 @@ async function index() {
 		await new Promise((f) => setTimeout(f, 10000));
 		const sessionKeyManager = await (await hardhatEthers.getContractFactory('SessionKeyManager')).deploy();
 		console.log('2 deployed session keys manager');
+		console.log("SKey manager", sessionKeyManager.address);
 		await new Promise((f) => setTimeout(f, 10000));
 		const smartAccountAddress = await userSA.address;
 
@@ -92,25 +102,32 @@ async function index() {
 
 		await new Promise((f) => setTimeout(f, 10000));
 		await entryPoint.handleOps([userOp], alice.address);
+
 		console.log('✨ created userOp');
 
 		await new Promise((f) => setTimeout(f, 10000));
 		// 3. deploy validation module
-		const erc20SessionModule = await (await hardhatEthers.getContractFactory('ERC20SessionValidationModule')).deploy();
+		const vvaSessionModule = await(await hardhatEthers.getContractFactory('VVASessionValidationModule')).deploy(
+			'0xa5ccb95f10e63bd84cef8f0a5556652c'
+		);
 		console.log('3 deployed Validation Module');
+		console.log("VVA session module", vvaSessionModule.address);
 
 		await new Promise((f) => setTimeout(f, 10000));
-		const mockToken = await getMockToken();
-		const {sessionKeyData, leafData} = await getERC20SessionKeyParams(
-			sessionKey.address,
-			mockToken.address,
-			charlie.address,
-			maxAmount,
+		
+		const { sessionKeyMockup, groupId, sismoConnectResponse } = await getMockVVASessionKeyData();
+		// console.log("ValidationModuleAddress", vvaSessionModule.address)
+		const {sessionKeyData, leafData} = await getVVASessionKeyParams(
+			smartAccountOwner.address,
+			groupId,
+			sismoConnectResponse,
 			0,
 			0,
-			erc20SessionModule.address
+			vvaSessionModule.address
 		);
-			await new Promise((f) => setTimeout(f, 10000));
+		// await new Promise((f) => setTimeout(f, 10000));
+		// const sessionKeyManager = (await hardhatEthers.getContractFactory('SessionKeyManager')).attach("0x5B19B6DCa5abd3eC2886f477555A7EAA122f039E");
+
 		const merkleTree = await enableNewTreeForSmartAccountViaEcdsa(
 			[ethers.utils.keccak256(leafData)],
 			sessionKeyManager,
@@ -121,6 +138,28 @@ async function index() {
 		);
 		console.log('4 Enabled New Merkel Tree For SmartAccount Via Ecdsa');
 
+		// await new Promise((f) => setTimeout(f, 30000));
+
+		const transferUserOp = await makeEcdsaSessionKeySignedUserOp(
+			"executeCall",
+			[
+			  alice.address,
+			  ethers.utils.parseEther("0.00001"),
+			  "0x"
+			],
+			userSA.address,
+			smartAccountOwner,
+			entryPoint,
+			sessionKeyManager.address,
+			0, 
+			0,
+			vvaSessionModule.address,
+			sessionKeyData,
+			merkleTree.getHexProof(ethers.utils.keccak256(leafData)),
+		  );
+	
+		  await entryPoint.handleOps([transferUserOp], alice.address, {gasLimit: 10000000});
+
 		// return {
 		// 	entryPoint: entryPoint,
 		// 	smartAccountImplementation: await getSmartAccountImplementation(),
@@ -130,14 +169,14 @@ async function index() {
 		// 	mockToken: mockToken,
 		// 	verifyingPaymaster: await getVerifyingPaymaster(deployer, verifiedSigner),
 		// 	sessionKeyManager: sessionKeyManager,
-		// 	erc20SessionModule: erc20SessionModule,
+		// 	vvaSessionModule: vvaSessionModule,
 		// 	sessionKeyData: sessionKeyData,
 		// 	leafData: leafData,
 		// 	merkleTree: merkleTree,
 		// };
 	});
 
-	// const {entryPoint, userSA: createdUserSA, sessionKeyManager, erc20SessionModule, sessionKeyData, leafData, merkleTree, mockToken} = await deploymentsDetup();
+	// const {entryPoint, userSA: createdUserSA, sessionKeyManager, vvaSessionModule, sessionKeyData, leafData, merkleTree, mockToken} = await deploymentsDetup();
 	deploymentsDetup().then(() => {
 		console.log('✅ done');
 	});
