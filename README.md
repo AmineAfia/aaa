@@ -11,13 +11,13 @@ Voulez-Vous Auth is an innovative hackathon project that ingeniously integrates 
 # How it's Made
 The project is built on top of biconomy contracts and sismo connect. the solution deploys the modular smart accounts from biconomy (from this branch https://github.com/bcnmy/scw-contracts/tree/SCW-V2-Modular-SA). Instead of using the the SDK, we deployed the needed AA contracts manually and deployed the SessionKeyManager, then deployed a custom Validation Module to manage sismo proofs. the set of contracts handle authentication, adding and removing users from an organisation. whenever a user is added or removed in sismo connect (thus added or removed from a Sismo Data Group), our Validation Module picks up the user when they try to login using our solution and remembers that the user presented a proof. This way users are added and removed from the org automatically. Our SDK offers the functionality to integrate Voulez Vous in any dapp and abstracts all the logic to manage the sismo proofs and sending userOps to the smart account. We have also built an Admin Console with NextJS, React and WalletConnect to manage organisations, and to onboard new organisational members into the Voulez-Vous Auth experience.
 
-# deploy the smart contracts
+# Deploy the smart contracts
 To deploy the smart contracts run
 ```
 npx hardhat run ./src/index.ts --network polygon_mumbai
 ```
 
-# run the admin UI
+# Run the admin UI
 To run the admin dashboard run
 ```
 cd voulez-vouz-auth-adminConsole-frontend
