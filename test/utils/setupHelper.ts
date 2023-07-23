@@ -29,6 +29,14 @@ export const getMockToken = async () => {
   return MockToken.attach(MockTokenDeployment.address);
 };
 
+export const getMockVVASessionKeyData = async () => {
+	return {
+		sessionKeyMockup: '',
+		groupId: '',
+		sismoConnectResponse: '',
+	};
+};
+
 export const getEcdsaOwnershipRegistryModule = async () => {
   const EcdsaOwnershipRegistryModuleDeployment = await deployments.get("EcdsaOwnershipRegistryModule");
   const EcdsaOwnershipRegistryModule = await hre.ethers.getContractFactory("EcdsaOwnershipRegistryModule");

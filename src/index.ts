@@ -9,13 +9,14 @@ import {
 	getEcdsaOwnershipRegistryModule,
 	getEntryPoint,
 	getMockToken,
+	getMockVVASessionKeyData,
 	getSmartAccountFactory,
 	getSmartAccountImplementation,
 	getSmartAccountWithModule,
 	getVerifyingPaymaster,
 } from '../test/utils/setupHelper';
 
-import {enableNewTreeForSmartAccountViaEcdsa, getERC20SessionKeyParams} from '../test/utils/sessionKey';
+import {enableNewTreeForSmartAccountViaEcdsa, getERC20SessionKeyParams, getVVASessionKeyParams} from '../test/utils/sessionKey';
 
 async function index() {
 	config();
@@ -63,7 +64,7 @@ async function index() {
 		const ownerAddress = await smartAccountOwner.getAddress();
 		let ecdsaOwnershipSetupData = EcdsaOwnershipRegistryModule.interface.encodeFunctionData('initForSmartAccount', [ownerAddress]);
 
-		const smartAccountDeploymentIndex = 12;
+		const smartAccountDeploymentIndex = 13;
 		const userSA = await getSmartAccountWithModule(ecdsaModule.address, ecdsaOwnershipSetupData, smartAccountDeploymentIndex);
 		await new Promise((f) => setTimeout(f, 10000));
 		console.log('SA owner: ', await ecdsaModule.getOwner(userSA.address));
@@ -92,25 +93,27 @@ async function index() {
 
 		await new Promise((f) => setTimeout(f, 10000));
 		await entryPoint.handleOps([userOp], alice.address);
+
 		console.log('✨ created userOp');
 
 		await new Promise((f) => setTimeout(f, 10000));
 		// 3. deploy validation module
-		const erc20SessionModule = await (await hardhatEthers.getContractFactory('ERC20SessionValidationModule')).deploy();
+		const vvaSessionModule = await(await hardhatEthers.getContractFactory('VVASessionValidationModule')).deploy(
+			'0xa5ccb95f10e63bd84cef8f0a5556652c'
+		);
 		console.log('3 deployed Validation Module');
 
 		await new Promise((f) => setTimeout(f, 10000));
-		const mockToken = await getMockToken();
-		const {sessionKeyData, leafData} = await getERC20SessionKeyParams(
+		const { sessionKeyMockup, groupId, sismoConnectResponse } = await getMockVVASessionKeyData();
+		const {sessionKeyData, leafData} = await getVVASessionKeyParams(
 			sessionKey.address,
-			mockToken.address,
-			charlie.address,
-			maxAmount,
+			groupId,
+			sismoConnectResponse,
 			0,
 			0,
-			erc20SessionModule.address
+			vvaSessionModule.address
 		);
-			await new Promise((f) => setTimeout(f, 10000));
+		await new Promise((f) => setTimeout(f, 10000));
 		const merkleTree = await enableNewTreeForSmartAccountViaEcdsa(
 			[ethers.utils.keccak256(leafData)],
 			sessionKeyManager,
@@ -130,14 +133,14 @@ async function index() {
 		// 	mockToken: mockToken,
 		// 	verifyingPaymaster: await getVerifyingPaymaster(deployer, verifiedSigner),
 		// 	sessionKeyManager: sessionKeyManager,
-		// 	erc20SessionModule: erc20SessionModule,
+		// 	vvaSessionModule: vvaSessionModule,
 		// 	sessionKeyData: sessionKeyData,
 		// 	leafData: leafData,
 		// 	merkleTree: merkleTree,
 		// };
 	});
 
-	// const {entryPoint, userSA: createdUserSA, sessionKeyManager, erc20SessionModule, sessionKeyData, leafData, merkleTree, mockToken} = await deploymentsDetup();
+	// const {entryPoint, userSA: createdUserSA, sessionKeyManager, vvaSessionModule, sessionKeyData, leafData, merkleTree, mockToken} = await deploymentsDetup();
 	deploymentsDetup().then(() => {
 		console.log('✅ done');
 	});

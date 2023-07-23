@@ -157,3 +157,31 @@ export async function getERC20SessionKeyParams(
   return params 
 }
 
+export async function getVVASessionKeyParams(
+	sessionKey: string,
+	groupId: string,
+	sismoConnectResponse: string,
+	validUntil: number,
+	validAfter: number,
+	sessionValidationModuleAddress: string
+): Promise<SessionKeyParams> {
+	const sessionKeyData = hexConcat([
+		hexZeroPad(sessionKey, 20),
+		hexZeroPad(groupId, 16),
+		sismoConnectResponse
+	]);
+
+	const leafData = hexConcat([
+		hexZeroPad(ethers.utils.hexlify(validUntil), 6),
+		hexZeroPad(ethers.utils.hexlify(validAfter), 6),
+		hexZeroPad(sessionValidationModuleAddress, 20),
+		sessionKeyData,
+	]);
+
+	const params: SessionKeyParams = {
+		sessionKeyData: sessionKeyData,
+		leafData: leafData,
+	};
+	return params;
+}
+
